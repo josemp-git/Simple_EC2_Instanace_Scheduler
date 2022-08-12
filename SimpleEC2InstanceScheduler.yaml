@@ -1,0 +1,210 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Simple EC2 Instance Scheduler
+Parameters: 
+  TagName: 
+    Description: Enter a name for the tag to use to identify instances that will be schedule for start/shutdown.
+    Type: String
+    Default: scheduled
+  TagValue:
+    Description: Enter value for the tag.
+    Type: String
+    Default: true
+
+Resources:
+  LambdaFunctionStop:
+    DependsOn: Role
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: python3.9
+      Role: !GetAtt Role.Arn
+      Handler: index.lambda_handler
+      Timeout: 10
+      Description: "Lambda function"
+      FunctionName: "Simple_EC2_Instance_Scheduler_Stop"
+      Environment:
+         Variables:
+          tag_name: !Sub
+            - 'tag:${TagName}'
+            - TagName: !Ref TagName
+          tag_value: !Ref TagValue
+      Code:  
+        ZipFile: |        
+          import boto3
+          from os import environ
+
+          def lambda_handler(event, context):
+              client = boto3.client('ec2')
+      
+              tag_name = environ['tag_name']
+              #Example: tag:schedule
+              tag_value = environ['tag_value']
+              #Example: tag:dev-env
+              #You can modify the name and value of the tag to be used in the environment variables.
+              #You must add the above define tags to the dev environment instances that we want to shutdown using this function.
+              
+              response = client.describe_instances(
+              Filters=[
+                  {'Name': tag_name, 'Values': [tag_value]},
+                  {'Name': 'instance-state-name', 'Values': ['running']},
+                  ],
+              ).get("Reservations")
+              ec2list=[]
+              for reservation in response:
+                  for instance in reservation['Instances']:
+                      ec2instance=instance.get("InstanceId")
+                      ec2list.append(ec2instance)
+              print(ec2list)
+              try:
+                  start = client.stop_instances(InstanceIds=ec2list)
+              except:
+                  print("There are no instances to shutdown.")
+
+  LambdaFunctionStart:
+    DependsOn: Role
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: python3.9
+      Role: !GetAtt Role.Arn
+      Handler: index.lambda_handler
+      Timeout: 10
+      Description: "Lambda function"
+      FunctionName: "Simple_EC2_Instance_Scheduler_Start"
+      Environment:
+         Variables:
+          tag_name: !Sub
+            - 'tag:${TagName}'
+            - TagName: !Ref TagName
+          tag_value: !Ref TagValue
+      Code:  
+        ZipFile: |        
+          import boto3
+          from os import environ
+
+          def lambda_handler(event, context):
+              client = boto3.client('ec2')
+      
+              tag_name = environ['tag_name']
+              #Example: tag:schedule
+              tag_value = environ['tag_value']
+              #Example: tag:dev-env
+              #You can modify the name and value of the tag to be used in the environment variables.
+              #You must add the above define tags to the dev environment instances that we want to shutdown using this function.
+              
+              response = client.describe_instances(
+              Filters=[
+                  {'Name': tag_name, 'Values': [tag_value]},
+                  {'Name': 'instance-state-name', 'Values': ['stopped']},
+                  ],
+              ).get("Reservations")
+              ec2list=[]
+              for reservation in response:
+                  for instance in reservation['Instances']:
+                      ec2instance=instance.get("InstanceId")
+                      ec2list.append(ec2instance)
+              print(ec2list)
+              try:
+                  start = client.start_instances(InstanceIds=ec2list)
+              except:
+                  print("There are no instances to start.")
+
+  LambdaFunctionLogs:
+    Type: AWS::Logs::LogGroup
+    Properties: 
+      LogGroupName: "/aws/lambda/Simple_EC2_Instance_Scheduler_Stop"
+  
+  LambdaFunctionLogs:
+    Type: AWS::Logs::LogGroup
+    Properties: 
+      LogGroupName: "/aws/lambda/Simple_EC2_Instance_Scheduler_Start"
+  
+  ScheduledRuleStop: 
+    DependsOn: LambdaFunctionStop
+    Type: AWS::Events::Rule
+    Properties: 
+      Description: "ScheduledRule"
+      ScheduleExpression: "cron(00 01 ? * MON-FRI *)"
+      State: "ENABLED"
+      Targets: 
+        - 
+          Arn: 
+            Fn::GetAtt: 
+              - "LambdaFunctionStop"
+              - "Arn"
+          Id: "TargetFunctionV1"
+  
+  PermissionForEventsToInvokeLambda: 
+    Type: AWS::Lambda::Permission
+    Properties: 
+      FunctionName: !Ref "LambdaFunctionStop"
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: 
+        Fn::GetAtt: 
+          - "ScheduledRuleStop"
+          - "Arn"
+
+  ScheduledRuleStart: 
+    DependsOn: LambdaFunctionStart
+    Type: AWS::Events::Rule
+    Properties: 
+      Description: "ScheduledRule"
+      ScheduleExpression: "cron(00 13 ? * MON-FRI *)"
+      State: "ENABLED"
+      Targets: 
+        - 
+          Arn: 
+            Fn::GetAtt: 
+              - "LambdaFunctionStart"
+              - "Arn"
+          Id: "TargetFunctionV1"
+  
+  PermissionForEventsToInvokeLambda: 
+    Type: AWS::Lambda::Permission
+    Properties: 
+      FunctionName: !Ref "LambdaFunctionStart"
+      Action: "lambda:InvokeFunction"
+      Principal: "events.amazonaws.com"
+      SourceArn: 
+        Fn::GetAtt: 
+          - "ScheduledRuleStart"
+          - "Arn"
+
+  Role:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: Simple_EC2_Instance_scheduler_role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: Simple_EC2_Instance_scheduler_Policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                - "logs:CreateLogGroup"
+                - "logs:CreateLogStream"
+                - "logs:PutLogEvents"
+                Resource: !GetAtt LambdaFunctionLogs.Arn
+              - Effect: Allow
+                Action:
+                - "ec2:DescribeInstances"
+                - "ec2:StartInstances"
+                - "ec2:StopInstances"
+                Resource: 
+                  Fn::Sub: "arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:*"
+
+Outputs:
+  EventBridgeRuleStart:
+    Description: Executes Lambda function to start instances every day from Monday to Friday at 08:00 AM (CDT)
+    Value: !Ref ScheduledRuleStart
+  EventBridgeRuleStop:
+    Description: Executes Lambda function to stop instances every day from Monday to Friday at 20:00 (CDT)
+    Value: !Ref ScheduledRuleStop
