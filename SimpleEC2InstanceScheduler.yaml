@@ -36,12 +36,9 @@ Resources:
               client = boto3.client('ec2')
       
               tag_name = environ['tag_name']
-              #Example: tag:schedule
               tag_value = environ['tag_value']
-              #Example: tag:dev-env
               #You can modify the name and value of the tag to be used in the environment variables.
-              #You must add the above define tags to the dev environment instances that we want to shutdown using this function.
-              
+
               response = client.describe_instances(
               Filters=[
                   {'Name': tag_name, 'Values': [tag_value]},
