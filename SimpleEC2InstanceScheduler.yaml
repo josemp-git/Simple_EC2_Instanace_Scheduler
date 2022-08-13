@@ -116,7 +116,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties: 
       Description: "ScheduledRule"
-      ScheduleExpression: "cron(00 01 ? * MON-FRI *)"
+      ScheduleExpression: "cron(00 01 ? * TUE-SAT *)"
       State: "ENABLED"
       Targets: 
         - 
@@ -142,7 +142,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties: 
       Description: "ScheduledRule"
-      ScheduleExpression: "cron(00 13 ? * MON-FRI *)"
+      ScheduleExpression: "cron(00 13 ? * TUE-SAT *)"
       State: "ENABLED"
       Targets: 
         - 
