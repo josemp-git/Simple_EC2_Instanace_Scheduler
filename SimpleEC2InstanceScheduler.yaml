@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Simple EC2 Instance Scheduler
 Parameters: 
-  TagName: 
+  TagKey: 
     Description: Enter a name for the tag to use to identify instances that will be schedule for start/stop.
     Type: String
     Default: scheduled
@@ -34,9 +34,9 @@ Resources:
                             - Ref: AWS::StackId
       Environment:
          Variables:
-          tag_name: !Sub
-            - 'tag:${TagName}'
-            - TagName: !Ref TagName
+          tag_key: !Sub
+            - 'tag:${TagKey}'
+            - TagKey: !Ref TagKey
           tag_value: !Ref TagValue
       Code:  
         ZipFile: |        
@@ -45,13 +45,13 @@ Resources:
           def lambda_handler(event, context):
               client = boto3.client('ec2')
       
-              tag_name = environ['tag_name']
+              tag_key = environ['tag_key']
               tag_value = environ['tag_value']
               #You can modify the name and value of the tag to be used in the environment variables.
 
               response = client.describe_instances(
               Filters=[
-                  {'Name': tag_name, 'Values': [tag_value]},
+                  {'Name': tag_key, 'Values': [tag_value]},
                   {'Name': 'instance-state-name', 'Values': ['running']},
                   ],
               ).get("Reservations")
@@ -90,9 +90,9 @@ Resources:
                             - Ref: AWS::StackId
       Environment:
          Variables:
-          tag_name: !Sub
-            - 'tag:${TagName}'
-            - TagName: !Ref TagName
+          tag_key: !Sub
+            - 'tag:${TagKey}'
+            - TagKey: !Ref TagKey
           tag_value: !Ref TagValue
       Code:  
         ZipFile: |        
@@ -101,13 +101,13 @@ Resources:
           def lambda_handler(event, context):
               client = boto3.client('ec2')
       
-              tag_name = environ['tag_name']
+              tag_key = environ['tag_key']
               tag_value = environ['tag_value']
               #You can modify the name and value of the tag to be used in the environment variables.
               
               response = client.describe_instances(
               Filters=[
-                  {'Name': tag_name, 'Values': [tag_value]},
+                  {'Name': tag_key, 'Values': [tag_value]},
                   {'Name': 'instance-state-name', 'Values': ['stopped']},
                   ],
               ).get("Reservations")
@@ -279,9 +279,9 @@ Outputs:
   EventBridgeRuleStop:
     Description: Executes Lambda function to stop instances every day from Monday to Friday at 20:00 (CDT)
     Value: !Ref ScheduledRuleStop
-  TagName:
+  TagKey:
     Description: Tag name that identifies instances which will be scheduled for start/stop.
-    Value: !Ref TagName
+    Value: !Ref TagKey
   TagValue:
     Description: Tag value
     Value: !Ref TagValue
