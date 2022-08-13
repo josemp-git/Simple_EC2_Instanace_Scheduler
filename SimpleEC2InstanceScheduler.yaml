@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: Simple EC2 Instance Scheduler
 Parameters: 
   TagName: 
-    Description: Enter a name for the tag to use to identify instances that will be schedule for start/shutdown.
+    Description: Enter a name for the tag to use to identify instances that will be schedule for start/stop.
     Type: String
     Default: scheduled
   TagValue:
@@ -12,7 +12,6 @@ Parameters:
 
 Resources:
   LambdaFunctionStop:
-    DependsOn: RoleStop
     Type: AWS::Lambda::Function
     Properties:
       Runtime: python3.9
@@ -20,7 +19,19 @@ Resources:
       Handler: index.lambda_handler
       Timeout: 10
       Description: "Lambda function"
-      FunctionName: "Simple_EC2_Instance_Scheduler_Stop"
+      FunctionName:
+        Fn::Join:
+          - '-'
+          - - Simple_EC2_Instance_Scheduler_Stop
+            - Fn::Select:
+                - 4
+                - Fn::Split:
+                    - '-'
+                    - Fn::Select:
+                        - 2
+                        - Fn::Split:
+                            - /
+                            - Ref: AWS::StackId
       Environment:
          Variables:
           tag_name: !Sub
@@ -31,7 +42,6 @@ Resources:
         ZipFile: |        
           import boto3
           from os import environ
-
           def lambda_handler(event, context):
               client = boto3.client('ec2')
       
@@ -50,14 +60,14 @@ Resources:
                   for instance in reservation['Instances']:
                       ec2instance=instance.get("InstanceId")
                       ec2list.append(ec2instance)
-              print(ec2list)
+              print("Found instances: " + ec2list)
               try:
                   start = client.stop_instances(InstanceIds=ec2list)
+                  print("Stoping instances: " + ec2list)
               except:
-                  print("There are no instances to shutdown.")
+                  print("There are no instances to stop.")
 
   LambdaFunctionStart:
-    DependsOn: RoleStart
     Type: AWS::Lambda::Function
     Properties:
       Runtime: python3.9
@@ -65,7 +75,19 @@ Resources:
       Handler: index.lambda_handler
       Timeout: 10
       Description: "Lambda function"
-      FunctionName: "Simple_EC2_Instance_Scheduler_Start"
+      FunctionName: 
+        Fn::Join:
+          - '-'
+          - - Simple_EC2_Instance_Scheduler_Start
+            - Fn::Select:
+                - 4
+                - Fn::Split:
+                    - '-'
+                    - Fn::Select:
+                        - 2
+                        - Fn::Split:
+                            - /
+                            - Ref: AWS::StackId
       Environment:
          Variables:
           tag_name: !Sub
@@ -76,7 +98,6 @@ Resources:
         ZipFile: |        
           import boto3
           from os import environ
-
           def lambda_handler(event, context):
               client = boto3.client('ec2')
       
@@ -95,27 +116,50 @@ Resources:
                   for instance in reservation['Instances']:
                       ec2instance=instance.get("InstanceId")
                       ec2list.append(ec2instance)
-              print(ec2list)
+              print("Found instances: " + ec2list)
               try:
                   start = client.start_instances(InstanceIds=ec2list)
+                  print("Starting instances: " + ec2list)
               except:
                   print("There are no instances to start.")
 
   LambdaFunctionLogsStop:
-    Type: AWS::Logs::LogGroup
-    Properties: 
-      LogGroupName: "/aws/lambda/Simple_EC2_Instance_Scheduler_Stop"
-  
+      Type: AWS::Logs::LogGroup
+      Properties: 
+        LogGroupName: 
+          Fn::Join:
+          - '-'
+          - - /aws/lambda/Simple_EC2_Instance_Scheduler_Stop
+            - Fn::Select:
+                - 4
+                - Fn::Split:
+                    - '-'
+                    - Fn::Select:
+                        - 2
+                        - Fn::Split:
+                            - /
+                            - Ref: AWS::StackId
   LambdaFunctionLogsStart:
-    Type: AWS::Logs::LogGroup
-    Properties: 
-      LogGroupName: "/aws/lambda/Simple_EC2_Instance_Scheduler_Start"
-  
+      Type: AWS::Logs::LogGroup
+      Properties: 
+        LogGroupName: "/aws/lambda/Simple_EC2_Instance_Scheduler_Start"
+        LogGroupName: 
+          Fn::Join:
+          - '-'
+          - - /aws/lambda/Simple_EC2_Instance_Scheduler_Start
+            - Fn::Select:
+                - 4
+                - Fn::Split:
+                    - '-'
+                    - Fn::Select:
+                        - 2
+                        - Fn::Split:
+                            - /
+                            - Ref: AWS::StackId
   ScheduledRuleStop: 
-    DependsOn: LambdaFunctionStop
     Type: AWS::Events::Rule
     Properties: 
-      Description: "ScheduledRule"
+      Description: "Scheduled Rule to stop tagged instances every week day at 20:00 (CDT)"
       ScheduleExpression: "cron(00 01 ? * TUE-SAT *)"
       State: "ENABLED"
       Targets: 
@@ -138,11 +182,10 @@ Resources:
           - "Arn"
 
   ScheduledRuleStart: 
-    DependsOn: LambdaFunctionStart
     Type: AWS::Events::Rule
     Properties: 
-      Description: "ScheduledRule"
-      ScheduleExpression: "cron(00 13 ? * TUE-SAT *)"
+      Description: "Scheduled Rule to start tagged instances every week day at 08:00 AM (CDT)"
+      ScheduleExpression: "cron(00 13 ? * MON-FRI *)"
       State: "ENABLED"
       Targets: 
         - 
@@ -236,3 +279,9 @@ Outputs:
   EventBridgeRuleStop:
     Description: Executes Lambda function to stop instances every day from Monday to Friday at 20:00 (CDT)
     Value: !Ref ScheduledRuleStop
+  TagName:
+    Description: Tag name that identifies instances which will be scheduled for start/stop.
+    Value: !Ref TagName
+  TagValue:
+    Description: Tag value
+    Value: !Ref TagValue
