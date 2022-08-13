@@ -19,5 +19,5 @@ You are set.
 
 You can change the name and value of the tag to use when deploying the AWS CloudFormation template.
 
-You can modify the start and stop times directly in Amazon EventBridge.
+You can change the start/stop times and frequency of execution by modifying the Amazon EventBridge rules.
 
