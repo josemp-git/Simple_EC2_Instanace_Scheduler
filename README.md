@@ -12,12 +12,12 @@ You can use this solution with those environments that are not required to be on
 1. Deploy the AWS CloudFormation template.
 2. After deploying the AWS CloudFormation template, add the following tag to the Amazon EC2 instances that you want to start and stop automatically:
 
-* Name = scheduled
+* Key = scheduled
 * Value = true
 
 You are set.
 
 You can change the name and value of the tag to use when deploying the AWS CloudFormation template.
 
-You can modify the start and shutdown times directly in Amazon EventBridge.
+You can modify the start and stop times directly in Amazon EventBridge.
 
