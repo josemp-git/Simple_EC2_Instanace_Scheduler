@@ -12,11 +12,11 @@ Parameters:
 
 Resources:
   LambdaFunctionStop:
-    DependsOn: Role
+    DependsOn: RoleStop
     Type: AWS::Lambda::Function
     Properties:
       Runtime: python3.9
-      Role: !GetAtt Role.Arn
+      Role: !GetAtt RoleStop.Arn
       Handler: index.lambda_handler
       Timeout: 10
       Description: "Lambda function"
@@ -57,11 +57,11 @@ Resources:
                   print("There are no instances to shutdown.")
 
   LambdaFunctionStart:
-    DependsOn: Role
+    DependsOn: RoleStart
     Type: AWS::Lambda::Function
     Properties:
       Runtime: python3.9
-      Role: !GetAtt Role.Arn
+      Role: !GetAtt RoleStart.Arn
       Handler: index.lambda_handler
       Timeout: 10
       Description: "Lambda function"
@@ -101,12 +101,12 @@ Resources:
               except:
                   print("There are no instances to start.")
 
-  LambdaFunctionLogs:
+  LambdaFunctionLogsStop:
     Type: AWS::Logs::LogGroup
     Properties: 
       LogGroupName: "/aws/lambda/Simple_EC2_Instance_Scheduler_Stop"
   
-  LambdaFunctionLogs:
+  LambdaFunctionLogsStart:
     Type: AWS::Logs::LogGroup
     Properties: 
       LogGroupName: "/aws/lambda/Simple_EC2_Instance_Scheduler_Start"
@@ -126,7 +126,7 @@ Resources:
               - "Arn"
           Id: "TargetFunctionV1"
   
-  PermissionForEventsToInvokeLambda: 
+  PermissionForEventsToInvokeLambdaStop: 
     Type: AWS::Lambda::Permission
     Properties: 
       FunctionName: !Ref "LambdaFunctionStop"
@@ -152,7 +152,7 @@ Resources:
               - "Arn"
           Id: "TargetFunctionV1"
   
-  PermissionForEventsToInvokeLambda: 
+  PermissionForEventsToInvokeLambdaStart: 
     Type: AWS::Lambda::Permission
     Properties: 
       FunctionName: !Ref "LambdaFunctionStart"
@@ -163,10 +163,10 @@ Resources:
           - "ScheduledRuleStart"
           - "Arn"
 
-  Role:
+  RoleStart:
     Type: 'AWS::IAM::Role'
     Properties:
-      RoleName: Simple_EC2_Instance_scheduler_role
+      RoleName: Simple_EC2_Instance_scheduler_Start_role
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -177,7 +177,7 @@ Resources:
             Action:
               - 'sts:AssumeRole'
       Policies:
-        - PolicyName: Simple_EC2_Instance_scheduler_Policy
+        - PolicyName: Simple_EC2_Instance_scheduler_Start_Policy
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -186,15 +186,49 @@ Resources:
                 - "logs:CreateLogGroup"
                 - "logs:CreateLogStream"
                 - "logs:PutLogEvents"
-                Resource: !GetAtt LambdaFunctionLogs.Arn
+                Resource: !GetAtt LambdaFunctionLogsStart.Arn
               - Effect: Allow
                 Action:
                 - "ec2:DescribeInstances"
+                Resource: "*"
+              - Effect: Allow
+                Action:
                 - "ec2:StartInstances"
+                Resource: 
+                  Fn::Sub: "arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:instance/*"
+  RoleStop:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      RoleName: Simple_EC2_Instance_scheduler_Stop_role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: Simple_EC2_Instance_scheduler_Stop_Policy
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                - "logs:CreateLogGroup"
+                - "logs:CreateLogStream"
+                - "logs:PutLogEvents"
+                Resource: !GetAtt LambdaFunctionLogsStop.Arn
+              - Effect: Allow
+                Action:
+                - "ec2:DescribeInstances"
+                Resource: "*"
+              - Effect: Allow
+                Action:
                 - "ec2:StopInstances"
                 Resource: 
-                  Fn::Sub: "arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:*"
-
+                  Fn::Sub: "arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:instance/*"
 Outputs:
   EventBridgeRuleStart:
     Description: Executes Lambda function to start instances every day from Monday to Friday at 08:00 AM (CDT)
