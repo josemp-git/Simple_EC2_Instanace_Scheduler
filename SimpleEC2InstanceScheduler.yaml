@@ -219,7 +219,19 @@ Resources:
             Action:
               - 'sts:AssumeRole'
       Policies:
-        - PolicyName: Simple_EC2_Instance_scheduler_Start_Policy
+        - PolicyName: 
+            Fn::Join:
+              - '-'
+              - - Simple_EC2_Instance_scheduler_Start_Policy
+                - Fn::Select:
+                    - 4
+                    - Fn::Split:
+                        - '-'
+                        - Fn::Select:
+                            - 2
+                            - Fn::Split:
+                                - /
+                                - Ref: AWS::StackId
           PolicyDocument:
             Version: 2012-10-17
             Statement:
@@ -251,7 +263,19 @@ Resources:
             Action:
               - 'sts:AssumeRole'
       Policies:
-        - PolicyName: Simple_EC2_Instance_scheduler_Stop_Policy
+        - PolicyName:
+            Fn::Join:
+                  - '-'
+                  - - Simple_EC2_Instance_scheduler_Start_Policy
+                    - Fn::Select:
+                        - 4
+                        - Fn::Split:
+                            - '-'
+                            - Fn::Select:
+                                - 2
+                                - Fn::Split:
+                                    - /
+                                    - Ref: AWS::StackId
           PolicyDocument:
             Version: 2012-10-17
             Statement:
