@@ -209,7 +209,6 @@ Resources:
   RoleStart:
     Type: 'AWS::IAM::Role'
     Properties:
-      RoleName: Simple_EC2_Instance_scheduler_Start_role
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -242,7 +241,6 @@ Resources:
   RoleStop:
     Type: 'AWS::IAM::Role'
     Properties:
-      RoleName: Simple_EC2_Instance_scheduler_Stop_role
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
