@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: Simple EC2 Instance Scheduler
 Parameters: 
   TagKey: 
-    Description: Enter a name for the tag to use to identify instances that will be schedule for start/stop.
+    Description: Enter a name for the tag to use to identify instances that will be scheduled for start/stop.
     Type: String
     Default: scheduled
   TagValue:
