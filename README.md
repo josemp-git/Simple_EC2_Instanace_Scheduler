@@ -1,6 +1,6 @@
 # Simple EC2 Instance Scheduler
 
-This simple solution deploys two AWS Lambda functions that will start and stop the EC2 instances of your choice by adding an specific tag. For this purpose, two Amazon EventBridge rules are created:
+This simple solution deploys two AWS Lambda functions that will start and stop the EC2 instances of your choice by adding a specific tag. For this purpose, two Amazon EventBridge rules are created:
 
 * One rule will execute the AWS Lambda function that will start all your tagged instances at 08:00 AM (CDT) from Monday to Friday.
 * The second rule will execute the AWS Lambda function that will stop all your tagged instances at 20:00 (CDT) from Monday to Friday.
