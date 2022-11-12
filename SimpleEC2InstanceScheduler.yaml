@@ -159,8 +159,8 @@ Resources:
   ScheduledRuleStop: 
     Type: AWS::Events::Rule
     Properties: 
-      Description: "Scheduled Rule to stop tagged instances every week day at 20:00 (CDT)"
-      ScheduleExpression: "cron(00 01 ? * TUE-SAT *)"
+      Description: "Scheduled Rule to stop tagged instances every week day at 20:00 (CST)"
+      ScheduleExpression: "cron(00 02 ? * TUE-SAT *)"
       State: "ENABLED"
       Targets: 
         - 
@@ -184,8 +184,8 @@ Resources:
   ScheduledRuleStart: 
     Type: AWS::Events::Rule
     Properties: 
-      Description: "Scheduled Rule to start tagged instances every week day at 08:00 AM (CDT)"
-      ScheduleExpression: "cron(00 13 ? * MON-FRI *)"
+      Description: "Scheduled Rule to start tagged instances every week day at 08:00 AM (CST)"
+      ScheduleExpression: "cron(00 134? * MON-FRI *)"
       State: "ENABLED"
       Targets: 
         - 
