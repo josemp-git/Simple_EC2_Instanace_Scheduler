@@ -185,7 +185,7 @@ Resources:
     Type: AWS::Events::Rule
     Properties: 
       Description: "Scheduled Rule to start tagged instances every week day at 08:00 AM (CST)"
-      ScheduleExpression: "cron(00 134? * MON-FRI *)"
+      ScheduleExpression: "cron(00 14 ? * MON-FRI *)"
       State: "ENABLED"
       Targets: 
         - 
@@ -243,13 +243,10 @@ Resources:
                 Resource: !GetAtt LambdaFunctionLogsStart.Arn
               - Effect: Allow
                 Action:
+                - "ec2:StartInstances"
                 - "ec2:DescribeInstances"
                 Resource: "*"
-              - Effect: Allow
-                Action:
-                - "ec2:StartInstances"
-                Resource: 
-                  Fn::Sub: "arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:instance/*"
+   
   RoleStop:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -266,7 +263,7 @@ Resources:
         - PolicyName:
             Fn::Join:
                   - '-'
-                  - - Simple_EC2_Instance_scheduler_Start_Policy
+                  - - Simple_EC2_Instance_scheduler_Stop_Policy
                     - Fn::Select:
                         - 4
                         - Fn::Split:
@@ -286,20 +283,17 @@ Resources:
                 - "logs:PutLogEvents"
                 Resource: !GetAtt LambdaFunctionLogsStop.Arn
               - Effect: Allow
-                Action:
+                Action: 
+                - "ec2:StopInstances"
                 - "ec2:DescribeInstances"
                 Resource: "*"
-              - Effect: Allow
-                Action:
-                - "ec2:StopInstances"
-                Resource: 
-                  Fn::Sub: "arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:instance/*"
+                
 Outputs:
   EventBridgeRuleStart:
-    Description: Executes Lambda function to start instances every day from Monday to Friday at 08:00 AM (CDT)
+    Description: Executes Lambda function to start instances every day from Monday to Friday at 08:00 AM (CST)
     Value: !Ref ScheduledRuleStart
   EventBridgeRuleStop:
-    Description: Executes Lambda function to stop instances every day from Monday to Friday at 20:00 (CDT)
+    Description: Executes Lambda function to stop instances every day from Monday to Friday at 20:00 (CST)
     Value: !Ref ScheduledRuleStop
   TagKey:
     Description: Tag name that identifies instances which will be scheduled for start/stop.

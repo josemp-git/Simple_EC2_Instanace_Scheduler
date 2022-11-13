@@ -2,8 +2,8 @@
 
 This simple solution deploys two AWS Lambda functions that will start and stop the EC2 instances of your choice by adding a specific tag. For this purpose, two Amazon EventBridge rules are created:
 
-* One rule will execute the AWS Lambda function that will start all your tagged instances at 08:00 AM (CDT) from Monday to Friday.
-* The second rule will execute the AWS Lambda function that will stop all your tagged instances at 20:00 (CDT) from Monday to Friday.
+* One rule will execute the AWS Lambda function that will start all your tagged instances at 08:00 AM (CST) from Monday to Friday.
+* The second rule will execute the AWS Lambda function that will stop all your tagged instances at 20:00 (CST) from Monday to Friday.
 
 You can use this solution with those environments that are not required to be on 24/7 (e.g: dev and test) and save money.
 
