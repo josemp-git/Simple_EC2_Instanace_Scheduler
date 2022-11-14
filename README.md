@@ -1,23 +1,26 @@
 # Simple EC2 Instance Scheduler
 
-This simple solution deploys two AWS Lambda functions that will start and stop the EC2 instances of your choice by adding a specific tag. For this purpose, two Amazon EventBridge rules are created:
+This simple solution deploys two AWS Lambda functions that will start and stop the Amazon EC2 instances of your choice by adding a specific tag. For this purpose, two Amazon EventBridge rules are created:
 
-* One rule will execute the AWS Lambda function that will start all your tagged instances at 08:00 AM (CST) from Monday to Friday.
-* The second rule will execute the AWS Lambda function that will stop all your tagged instances at 20:00 (CST) from Monday to Friday.
+* One rule will execute the AWS Lambda function that will START all your tagged instances at 08:00 AM (CST) from Monday to Friday.
+* The second rule will execute the AWS Lambda function that will STOP all your tagged instances at 20:00 (CST) from Monday to Friday.
 
-You can use this solution with those environments that are not required to be on 24/7 (e.g: dev and test) and save money.
+These rules can be enabled or disabled at any time directly in the Amazon EventBridge service. You can also modify the time, date and frequency of execution of these rules in Amazon EventBridge and adjust these to your convenience. See the "Outputs" section in AWS CloudFormation for the name of the Amazon EventBridge rules.
+
+You can use this solution with those environments that are not required to be on 24/7 (e.g.: dev and test) and save money.
 
 ## Instructions
 
 1. Deploy the AWS CloudFormation template.
-2. After deploying the AWS CloudFormation template, add the following tag to the Amazon EC2 instances that you want to start and stop automatically:
+2. Once the resources are deployed, start tagging the Amazon EC2 instances that you want to start and stop automatically. Default tag is:
 
 * Key = scheduled
 * Value = true
 
+![Default tags](default-tags.png)
+
 You are set.
 
-You can change the name and value of the tag to use when deploying the AWS CloudFormation template.
+If you need to start/stop different Amazon EC2 instances at different times, you can deploy this template several times specifying different tags for each use case (e.g.: use tag dev-env/true for the dev environment instances and tag test-env/true for the test environment instances). Make sure to modify the Amazon EventBridge rules accordingly.
 
-You can change the start/stop times and frequency of execution by modifying the Amazon EventBridge rules.
-
+![Dev-env tags example](dev-env-tags.png)

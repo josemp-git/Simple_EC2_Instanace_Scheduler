@@ -9,6 +9,24 @@ Parameters:
     Description: Enter value for the tag.
     Type: String
     Default: true
+  StartTime:
+    Description: ENABLE scheduled automatic START of tagged Amazon EC2 instances. Default time is Monday to Friday at 08:00 AM (CST). 
+    Type: String
+    Default: "Yes"
+    AllowedValues:
+      - "Yes"
+      - "No"
+  StopTime:
+    Description: ENABLE scheduled automatic STOP of tagged Amazon EC2 instances. Default time is Monday to Friday at 08:00 PM (CST). 
+    Type: String
+    Default: "Yes"
+    AllowedValues:
+      - "Yes"
+      - "No"
+    
+Conditions:
+  StopTimeCondition: !Equals [!Ref StopTime, "Yes"]
+  StartTimeCondition: !Equals [!Ref StopTime, "Yes"]
 
 Resources:
   LambdaFunctionStop:
@@ -44,7 +62,7 @@ Resources:
           from os import environ
           def lambda_handler(event, context):
               client = boto3.client('ec2')
-      
+
               tag_key = environ['tag_key']
               tag_value = environ['tag_value']
               #You can modify the name and value of the tag to be used in the environment variables.
@@ -139,6 +157,7 @@ Resources:
                         - Fn::Split:
                             - /
                             - Ref: AWS::StackId
+                            
   LambdaFunctionLogsStart:
       Type: AWS::Logs::LogGroup
       Properties: 
@@ -156,12 +175,14 @@ Resources:
                         - Fn::Split:
                             - /
                             - Ref: AWS::StackId
+
   ScheduledRuleStop: 
     Type: AWS::Events::Rule
+    #Condition: StopTimeCondition
     Properties: 
       Description: "Scheduled Rule to stop tagged instances every week day at 20:00 (CST)"
       ScheduleExpression: "cron(00 02 ? * TUE-SAT *)"
-      State: "ENABLED"
+      State: !If [StopTimeCondition, 'ENABLED', 'DISABLED']
       Targets: 
         - 
           Arn: 
@@ -186,7 +207,7 @@ Resources:
     Properties: 
       Description: "Scheduled Rule to start tagged instances every week day at 08:00 AM (CST)"
       ScheduleExpression: "cron(00 14 ? * MON-FRI *)"
-      State: "ENABLED"
+      State: !If [StartTimeCondition, 'ENABLED', 'DISABLED']
       Targets: 
         - 
           Arn: 
@@ -233,20 +254,47 @@ Resources:
                                 - /
                                 - Ref: AWS::StackId
           PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                - "logs:CreateLogGroup"
-                - "logs:CreateLogStream"
-                - "logs:PutLogEvents"
-                Resource: !GetAtt LambdaFunctionLogsStart.Arn
-              - Effect: Allow
-                Action:
-                - "ec2:StartInstances"
-                - "ec2:DescribeInstances"
-                Resource: "*"
-   
+            Fn::Sub:
+              - |
+                  {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Action": [
+                                "logs:CreateLogStream",
+                                "logs:PutLogEvents"
+                            ],
+                            "Resource": "${LambdaFunctionLogsStart}",
+                            "Effect": "Allow"
+                        },
+                        {
+                            "Action": "ec2:DescribeInstances",
+                            "Resource": "*",
+                            "Effect": "Allow"
+                        },
+                        {
+                            "Action": "ec2:StartInstances",
+                            "Resource": "arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:instance/*",
+                            "Condition": {
+                                "StringEquals": {
+                                    "ec2:ResourceTag/${TagKey}": "${TagValue}"
+                                }
+                            },
+                            "Effect": "Allow"
+                        }
+                    ]
+                  }
+              -
+                TagKey: !Sub
+                  - '${TagKey}'
+                  - TagKey: !Ref TagKey
+                TagValue: !Sub
+                  - '${TagValue}'
+                  - TagValue: !Ref TagValue
+                LambdaFunctionLogsStart: !GetAtt LambdaFunctionLogsStart.Arn
+                Region: !Sub ${AWS::Region}
+                AccountId: !Sub ${AWS::AccountId}
+
   RoleStop:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -274,30 +322,63 @@ Resources:
                                     - /
                                     - Ref: AWS::StackId
           PolicyDocument:
-            Version: 2012-10-17
-            Statement:
-              - Effect: Allow
-                Action:
-                - "logs:CreateLogGroup"
-                - "logs:CreateLogStream"
-                - "logs:PutLogEvents"
-                Resource: !GetAtt LambdaFunctionLogsStop.Arn
-              - Effect: Allow
-                Action: 
-                - "ec2:StopInstances"
-                - "ec2:DescribeInstances"
-                Resource: "*"
-                
+            Fn::Sub:
+              - |
+                  {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Action": [
+                                "logs:CreateLogStream",
+                                "logs:PutLogEvents"
+                            ],
+                            "Resource": "${LambdaFunctionLogsStop}",
+                            "Effect": "Allow"
+                        },
+                        {
+                            "Action": "ec2:DescribeInstances",
+                            "Resource": "*",
+                            "Effect": "Allow"
+                        },
+                        {
+                            "Action": "ec2:StopInstances",
+                            "Resource": "arn:aws:ec2:${AWS::Region}:${AWS::AccountId}:instance/*",
+                            "Condition": {
+                                "StringEquals": {
+                                    "ec2:ResourceTag/${TagKey}": "${TagValue}"
+                                }
+                            },
+                            "Effect": "Allow"
+                        }
+                    ]
+                  }
+              -
+                TagKey: !Sub
+                  - '${TagKey}'
+                  - TagKey: !Ref TagKey
+                TagValue: !Sub
+                  - '${TagValue}'
+                  - TagValue: !Ref TagValue    
+                LambdaFunctionLogsStop: !GetAtt LambdaFunctionLogsStop.Arn
+                Region: !Sub ${AWS::Region}
+                AccountId: !Sub ${AWS::AccountId}
+
 Outputs:
   EventBridgeRuleStart:
-    Description: Executes Lambda function to start instances every day from Monday to Friday at 08:00 AM (CST)
+    Description: Amazon EventBridge rule that executes the AWS Lambda function to START instances at the time, date and frequency defined in the rule (default time is 08:00 AM CST from Monday to Friday).
     Value: !Ref ScheduledRuleStart
   EventBridgeRuleStop:
-    Description: Executes Lambda function to stop instances every day from Monday to Friday at 20:00 (CST)
+    Description: Amazon EventBridge rule that executes the AWS Lambda function to STOP instances at the time, date and frequency defined in the rule (default time is 08:00 AM CST from Monday to Friday).
     Value: !Ref ScheduledRuleStop
   TagKey:
-    Description: Tag name that identifies instances which will be scheduled for start/stop.
+    Description: Tag key that indicates which instances will be scheduled for start/stop.
     Value: !Ref TagKey
   TagValue:
-    Description: Tag value
+    Description: Tag value that indicates which instances will be scheduled for start/stop.
     Value: !Ref TagValue
+  LambdaFunctionStart:
+    Description: AWS Lambda function that starts tagged instances.
+    Value: !Ref LambdaFunctionStart
+  LambdaFunctionStop:
+    Description: AWS Lambda function that stops tagged instances.
+    Value: !Ref LambdaFunctionStop
