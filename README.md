@@ -21,6 +21,6 @@ You can use this solution with those environments that are not required to be on
 
 You are set.
 
-If you need to start/stop different Amazon EC2 instances at different times, you can deploy this template several times specifying different tags for each use case (e.g.: use tag dev-env/true for the dev environment instances and tag test-env/true for the test environment instances). Make sure to modify the Amazon EventBridge rules accordingly.
+If you need to start/stop different Amazon EC2 instances at different times, you can deploy this template several times specifying different tags for each use case (e.g.: use the tag dev-env/true for the dev environment instances or the tag test-env/true for the test environment instances). Make sure to modify the Amazon EventBridge rules accordingly.
 
 ![Dev-env tags example](dev-env-tags.png)
