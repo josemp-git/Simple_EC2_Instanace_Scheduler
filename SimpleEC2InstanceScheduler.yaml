@@ -10,14 +10,14 @@ Parameters:
     Type: String
     Default: true
   StartTime:
-    Description: ENABLE scheduled automatic START of tagged Amazon EC2 instances. Default time is Monday to Friday at 08:00 AM (CST). 
+    Description: ENABLE the scheduled automatic START of tagged Amazon EC2 instances. Default time is Monday to Friday at 08:00 AM (CST). 
     Type: String
     Default: "Yes"
     AllowedValues:
       - "Yes"
       - "No"
   StopTime:
-    Description: ENABLE scheduled automatic STOP of tagged Amazon EC2 instances. Default time is Monday to Friday at 08:00 PM (CST). 
+    Description: ENABLE the scheduled automatic STOP of tagged Amazon EC2 instances. Default time is Monday to Friday at 08:00 PM (CST). 
     Type: String
     Default: "Yes"
     AllowedValues:
