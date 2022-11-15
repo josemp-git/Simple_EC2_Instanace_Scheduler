@@ -12,17 +12,17 @@ Parameters:
   StartTime:
     Description: ENABLE the scheduled automatic START of tagged Amazon EC2 instances. Default time is Monday to Friday at 08:00 AM (CST). 
     Type: String
-    Default: "Yes"
     AllowedValues:
       - "Yes"
       - "No"
+    ConstraintDescription: You must select Yes or No.
   StopTime:
     Description: ENABLE the scheduled automatic STOP of tagged Amazon EC2 instances. Default time is Monday to Friday at 08:00 PM (CST). 
     Type: String
-    Default: "Yes"
     AllowedValues:
       - "Yes"
       - "No"
+    ConstraintDescription: You must select Yes or No.
     
 Conditions:
   StopTimeCondition: !Equals [!Ref StopTime, "Yes"]
@@ -173,8 +173,8 @@ Resources:
   ScheduledRuleStop: 
     Type: AWS::Events::Rule
     Properties: 
-      Description: "Scheduled Rule to stop tagged instances every week day at 20:00 (CST)"
-      ScheduleExpression: "cron(00 02 ? * TUE-SAT *)"
+      Description: "Scheduled Rule to stop tagged instances every day of the week (MON-SUN) at 20:00 (CST)"
+      ScheduleExpression: "cron(00 02 ? * * *)"
       State: !If [StopTimeCondition, "ENABLED", "DISABLED"]
       Targets: 
         - 
@@ -198,7 +198,7 @@ Resources:
   ScheduledRuleStart: 
     Type: AWS::Events::Rule
     Properties: 
-      Description: "Scheduled Rule to start tagged instances every week day at 08:00 AM (CST)"
+      Description: "Scheduled Rule to start tagged instances every week day (MON-FRI) at 08:00 AM (CST)"
       ScheduleExpression: "cron(00 14 ? * MON-FRI *)"
       State: !If [StartTimeCondition, "ENABLED", "DISABLED"]
       Targets: 
