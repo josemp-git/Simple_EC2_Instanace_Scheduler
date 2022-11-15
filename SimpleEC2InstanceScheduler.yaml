@@ -2,11 +2,11 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: Simple EC2 Instance Scheduler
 Parameters: 
   TagKey: 
-    Description: Enter a name for the tag to use to identify instances that will be scheduled for start/stop.
+    Description: Enter a name for the tag used to identify the instances that will be scheduled for start/stop.
     Type: String
     Default: scheduled
   TagValue:
-    Description: Enter value for the tag.
+    Description: Enter value for the tag used to identify the instances that will be scheduled for start/stop.
     Type: String
     Default: true
   StartTime:
@@ -26,7 +26,7 @@ Parameters:
     
 Conditions:
   StopTimeCondition: !Equals [!Ref StopTime, "Yes"]
-  StartTimeCondition: !Equals [!Ref StopTime, "Yes"]
+  StartTimeCondition: !Equals [!Ref StartTime, "Yes"]
 
 Resources:
   LambdaFunctionStop:
@@ -178,11 +178,10 @@ Resources:
 
   ScheduledRuleStop: 
     Type: AWS::Events::Rule
-    #Condition: StopTimeCondition
     Properties: 
       Description: "Scheduled Rule to stop tagged instances every week day at 20:00 (CST)"
       ScheduleExpression: "cron(00 02 ? * TUE-SAT *)"
-      State: !If [StopTimeCondition, 'ENABLED', 'DISABLED']
+      State: !If [StopTimeCondition, "ENABLED", "DISABLED"]
       Targets: 
         - 
           Arn: 
@@ -207,7 +206,7 @@ Resources:
     Properties: 
       Description: "Scheduled Rule to start tagged instances every week day at 08:00 AM (CST)"
       ScheduleExpression: "cron(00 14 ? * MON-FRI *)"
-      State: !If [StartTimeCondition, 'ENABLED', 'DISABLED']
+      State: !If [StartTimeCondition, "ENABLED", "DISABLED"]
       Targets: 
         - 
           Arn: 
