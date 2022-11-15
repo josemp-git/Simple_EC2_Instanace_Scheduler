@@ -2,8 +2,8 @@
 
 This simple solution deploys two AWS Lambda functions that will start and stop the Amazon EC2 instances of your choice by adding a specific tag. For this purpose, two Amazon EventBridge rules are created:
 
-* One rule will execute the AWS Lambda function that will START all your tagged instances at 08:00 AM (CST) from Monday to Friday.
-* The second rule will execute the AWS Lambda function that will STOP all your tagged instances at 20:00 (CST) every day of the week (from Monday to Sunday).
+* The first rule will execute an AWS Lambda function that will START all your tagged instances at 08:00 AM (CST) from Monday to Friday.
+* The second rule will execute an AWS Lambda function that will STOP all your tagged instances at 20:00 (CST) every day of the week (from Monday to Sunday).
 
 These rules can be enabled or disabled at any time directly in the Amazon EventBridge service. You can also modify the time, date and frequency of execution of these rules in Amazon EventBridge and adjust these to your convenience. For more information on how to create Amazon EventBridge rules review the [AWS documentation](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-create-rule-schedule.html). See the "Outputs" section in AWS CloudFormation for the name of the Amazon EventBridge rules.
 
