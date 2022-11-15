@@ -15,14 +15,14 @@ Parameters:
     AllowedValues:
       - "Yes"
       - "No"
-    ConstraintDescription: You must select Yes or No.
+    ConstraintDescription: Please select Yes or No to continue.
   StopTime:
     Description: ENABLE the scheduled automatic STOP of tagged Amazon EC2 instances. Default time is Monday to Friday at 08:00 PM (CST). 
     Type: String
     AllowedValues:
       - "Yes"
       - "No"
-    ConstraintDescription: You must select Yes or No.
+    ConstraintDescription: Please select Yes or No to continue.
     
 Conditions:
   StopTimeCondition: !Equals [!Ref StopTime, "Yes"]
